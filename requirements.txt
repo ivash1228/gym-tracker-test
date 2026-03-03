@@ -1,0 +1,16 @@
+# Testing
+pytest>=7.4
+pytest-html
+allure-pytest
+
+# UI
+playwright
+
+# API
+requests
+httpx
+pytest-requests
+
+# Vibium (AI-native browser automation)
+vibium
+

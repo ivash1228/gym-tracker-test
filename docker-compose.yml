@@ -1,0 +1,19 @@
+services:
+
+  frontend:
+    image: ghcr.io/ivash1228/gym-tracker-ui:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    image: ghcr.io/ivash1228/gym-tracker:latest
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
