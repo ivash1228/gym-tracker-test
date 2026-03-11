@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.idea/
+
+# Auth state contains session cookies — never commit
+ui/test_data/.auth/
+
+# Test artifacts
+ui/test_results/*.png
+ui/test_results/*.html
+
+# Secrets
+.env
+
+# OS
+.DS_Store
