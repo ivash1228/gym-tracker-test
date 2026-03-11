@@ -5,11 +5,17 @@ allure-pytest
 
 # UI
 playwright
+pytest-playwright
 
 # API
 requests
 httpx
-pytest-requests
+
+# Test data
+faker
+
+# Config
+python-dotenv
 
 # Vibium (AI-native browser automation)
 vibium
