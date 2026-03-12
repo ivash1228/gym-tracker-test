@@ -1,4 +1,7 @@
-.PHONY: test test-headed install docker-up docker-down parse-spec generate-tests generate-exploratory test-api test-exploratory
+.PHONY: test test-headed install docker-up docker-down fetch-spec parse-spec generate-tests generate-exploratory test-api test-exploratory
+
+fetch-spec:
+	curl -s http://localhost:8080/v3/api-docs -o api/spec/openapi.json
 
 parse-spec:
 	python -m api.generator.parse_spec
