@@ -1,4 +1,19 @@
-.PHONY: test test-headed install docker-up docker-down
+.PHONY: test test-headed install docker-up docker-down parse-spec generate-tests generate-exploratory test-api test-exploratory
+
+parse-spec:
+	python -m api.generator.parse_spec
+
+generate-tests:
+	python -m api.generator.generate_tests
+
+generate-exploratory:
+	python -m api.generator.generate_exploratory
+
+test-api:
+	pytest api/ -v
+
+test-exploratory:
+	pytest api/tests/test_client_controller_exploratory.py -v
 
 install:
 	pip install -r requirements.txt

@@ -1,6 +1,7 @@
 # Testing
 pytest>=7.4
 pytest-html
+pytest-json-report
 allure-pytest
 
 # UI
@@ -16,6 +17,9 @@ faker
 
 # Config
 python-dotenv
+
+# LLM (exploratory test generation)
+anthropic
 
 # Vibium (AI-native browser automation)
 vibium
