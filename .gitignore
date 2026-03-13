@@ -8,9 +8,13 @@ ui/test_data/.auth/
 # Test artifacts
 ui/test_results/*.png
 ui/test_results/*.html
+vibium/failures/
 
 # Secrets
 .env
+
+# WIP (don't push yet)
+docs/
 
 # OS
 .DS_Store
