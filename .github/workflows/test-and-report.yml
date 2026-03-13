@@ -20,8 +20,36 @@ jobs:
     permissions:
       contents: read
       issues: write
+      projects: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Get project ID (debug)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const owner = context.repo.owner;
+            try {
+              const userRes = await github.graphql(
+                `query($login: String!, $num: Int!) { user(login: $login) { projectV2(number: $num) { id } } }`,
+                { login: owner, num: 1 }
+              );
+              const orgRes = await github.graphql(
+                `query($login: String!, $num: Int!) { organization(login: $login) { projectV2(number: $num) { id } } }`,
+                { login: owner, num: 1 }
+              );
+              const userId = userRes?.user?.projectV2?.id;
+              const orgId = orgRes?.organization?.projectV2?.id;
+              core.info('');
+              core.info('=== PROJECT IDs (set PROJECT_ID variable to one of these) ===');
+              core.info(`User project 1: ${userId || 'not found'}`);
+              core.info(`Org project 1:  ${orgId || 'not found'}`);
+              core.info('===========================================================');
+            } catch (e) {
+              core.warning(`Could not fetch project IDs: ${e.message}`);
+            }
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -108,6 +136,7 @@ jobs:
               failures.push({ name: 'Setup/Import failure', message: `${hint} tests failed but no JSON report available (e.g. ImportError in conftest or before pytest ran).` });
             }
 
+            let projectAddFailures = 0;
             for (const f of failures) {
               const title = `[Test Failure] ${f.name.split('::').pop()}`;
               const { data: existing } = await github.rest.issues.listForRepo({
@@ -130,16 +159,18 @@ jobs:
 
               const projectId = '${{ vars.PROJECT_ID }}';
               if (projectId && projectId !== '') {
-                const mutation = `
-                  mutation($projectId: ID!, $contentId: ID!) {
-                    addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
-                      item { id }
+                try {
+                  await github.graphql(`
+                    mutation($projectId: ID!, $contentId: ID!) {
+                      addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) { item { id } }
                     }
-                  }
-                `;
-                await github.graphql(mutation, {
-                  projectId,
-                  contentId: data.node_id,
-                });
+                  `, { projectId, contentId: data.node_id });
+                } catch (e) {
+                  projectAddFailures++;
+                  core.warning(`Failed to add issue to project: ${e.message}`);
+                }
               }
+            }
+            if (projectAddFailures > 0) {
+              core.setFailed(`Failed to add ${projectAddFailures} issue(s) to project board. Check PROJECT_ID variable.`);
             }
