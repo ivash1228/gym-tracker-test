@@ -133,7 +133,7 @@ jobs:
                 const mutation = `
                   mutation($projectId: ID!, $contentId: ID!) {
                     addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
-                      projectV2Item { id }
+                      item { id }
                     }
                   }
                 `;
