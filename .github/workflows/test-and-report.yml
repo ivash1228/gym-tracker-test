@@ -31,24 +31,40 @@ jobs:
           github-token: ${{ github.token }}
           script: |
             const owner = context.repo.owner;
+            core.info('');
+            core.info('=== Listing all Projects V2 (set PROJECT_ID to one of these) ===');
             try {
               const userRes = await github.graphql(
-                `query($login: String!, $num: Int!) { user(login: $login) { projectV2(number: $num) { id } } }`,
-                { login: owner, num: 1 }
+                `query($login: String!) {
+                  user(login: $login) {
+                    projectsV2(first: 20) {
+                      nodes { number, title, id }
+                    }
+                  }
+                }`,
+                { login: owner }
               );
-              const orgRes = await github.graphql(
-                `query($login: String!, $num: Int!) { organization(login: $login) { projectV2(number: $num) { id } } }`,
-                { login: owner, num: 1 }
-              );
-              const userId = userRes?.user?.projectV2?.id;
-              const orgId = orgRes?.organization?.projectV2?.id;
-              core.info('');
-              core.info('=== PROJECT IDs (set PROJECT_ID variable to one of these) ===');
-              core.info(`User project 1: ${userId || 'not found'}`);
-              core.info(`Org project 1:  ${orgId || 'not found'}`);
+              const nodes = userRes?.user?.projectsV2?.nodes || [];
+              if (nodes.length === 0) {
+                core.info('No user projects found. Trying org...');
+                const orgRes = await github.graphql(
+                  `query($login: String!) {
+                    organization(login: $login) {
+                      projectsV2(first: 20) {
+                        nodes { number, title, id }
+                      }
+                    }
+                  }`,
+                  { login: owner }
+                );
+                const orgNodes = orgRes?.organization?.projectsV2?.nodes || [];
+                orgNodes.forEach(p => core.info(`  #${p.number} "${p.title}": ${p.id}`));
+              } else {
+                nodes.forEach(p => core.info(`  #${p.number} "${p.title}": ${p.id}`));
+              }
               core.info('===========================================================');
             } catch (e) {
-              core.warning(`Could not fetch project IDs: ${e.message}`);
+              core.warning(`Could not fetch projects: ${e.message}`);
             }
 
       - name: Set up Python
