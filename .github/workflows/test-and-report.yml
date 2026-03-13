@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
   schedule:
     - cron: '0 2 * * *' #for nightly runs
   repository_dispatch:
@@ -16,6 +17,9 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v4
 
@@ -41,6 +45,12 @@ jobs:
       - name: Run API tests
         id: api-tests
         continue-on-error: true
+        env:
+          BASE_URL: http://localhost:5174
+          API_URL: http://localhost:8080
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
         run: |
           pytest api/ -v --json-report --json-report-file=api-report.json
           echo "exitcode=$?" >> $GITHUB_OUTPUT
@@ -59,10 +69,10 @@ jobs:
           echo "exitcode=$?" >> $GITHUB_OUTPUT
 
       - name: Create bug reports on failure
-        if: always() && (steps.api-tests.outcome == 'failure' || steps.ui-tests.outcome == 'failure') && github.event_name == 'schedule'
+        if: always() && (steps.api-tests.outcome == 'failure' || steps.ui-tests.outcome == 'failure') && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.PROJECT_TOKEN || github.token }}
+          github-token: ${{ github.token }}
           script: |
             const fs = require('fs');
             const failures = [];
@@ -70,7 +80,7 @@ jobs:
             try {
               const apiReport = JSON.parse(fs.readFileSync('api-report.json', 'utf8'));
               for (const test of apiReport.tests || []) {
-                if (test.outcome === 'failed') {
+                if (test.outcome === 'failed' || test.outcome === 'error') {
                   failures.push({
                     name: test.nodeid,
                     message: test.call?.longrepr || test.longrepr || 'No details',
@@ -82,7 +92,7 @@ jobs:
             try {
               const uiReport = JSON.parse(fs.readFileSync('ui-report.json', 'utf8'));
               for (const test of uiReport.tests || []) {
-                if (test.outcome === 'failed') {
+                if (test.outcome === 'failed' || test.outcome === 'error') {
                   failures.push({
                     name: test.nodeid,
                     message: test.call?.longrepr || test.longrepr || 'No details',
@@ -92,7 +102,10 @@ jobs:
             } catch (e) {}
 
             if (failures.length === 0) {
-              failures.push({ name: 'Unknown', message: 'Tests failed but no JSON report available.' });
+              const apiFailed = '${{ steps.api-tests.outcome }}' === 'failure';
+              const uiFailed = '${{ steps.ui-tests.outcome }}' === 'failure';
+              const hint = [apiFailed && 'API', uiFailed && 'UI'].filter(Boolean).join(' + ') || 'Tests';
+              failures.push({ name: 'Setup/Import failure', message: `${hint} tests failed but no JSON report available (e.g. ImportError in conftest or before pytest ran).` });
             }
 
             for (const f of failures) {

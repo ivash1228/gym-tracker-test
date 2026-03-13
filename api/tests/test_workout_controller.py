@@ -33,7 +33,7 @@ def test_addWorkout_success(api_url, auth_headers, client_id):
     url = f"{api_url}/clients/{client_id}/workouts"
     body = {
         "workoutDate": fake.date_this_year().isoformat(),
-        "workoutName": fake.catch_phrase()[:30],
+        "workoutName": fake.catch_phrase(),
     }
     
     resp = requests.post(url, headers=auth_headers, json=body)
@@ -45,7 +45,7 @@ def test_addWorkout_unauthorized(api_url, client_id):
     url = f"{api_url}/clients/{client_id}/workouts"
     body = {
         "workoutDate": fake.date_this_year().isoformat(),
-        "workoutName": fake.catch_phrase()[:30],
+        "workoutName": fake.catch_phrase(),
     }
     
     resp = requests.post(url, json=body)
@@ -57,7 +57,7 @@ def test_addWorkout_missing_workoutDate(api_url, auth_headers, client_id):
     """Missing required field workoutDate returns 400."""
     url = f"{api_url}/clients/{client_id}/workouts"
     body = {
-        "workoutName": fake.catch_phrase()[:30],
+        "workoutName": fake.catch_phrase(),
     }
     resp = requests.post(url, headers=auth_headers, json=body)
     assert resp.status_code == 400
