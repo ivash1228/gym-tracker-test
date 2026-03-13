@@ -31,36 +31,41 @@ jobs:
           github-token: ${{ github.token }}
           script: |
             const owner = context.repo.owner;
+            const repo = context.repo.repo;
             core.info('');
-            core.info('=== Listing all Projects V2 (set PROJECT_ID to one of these) ===');
+            core.info('=== Projects V2 (set PROJECT_ID variable to one of these) ===');
+            let found = 0;
             try {
+              const repoRes = await github.graphql(
+                `query($owner: String!, $repo: String!) {
+                  repository(owner: $owner, name: $repo) {
+                    projectsV2(first: 20) { nodes { number, title, id } }
+                  }
+                }`,
+                { owner, repo }
+              );
+              const repoNodes = repoRes?.repository?.projectsV2?.nodes || [];
+              if (repoNodes.length > 0) {
+                core.info('Repository projects:');
+                repoNodes.forEach(p => { core.info(`  #${p.number} "${p.title}": ${p.id}`); found++; });
+              }
               const userRes = await github.graphql(
                 `query($login: String!) {
                   user(login: $login) {
-                    projectsV2(first: 20) {
-                      nodes { number, title, id }
-                    }
+                    projectsV2(first: 20) { nodes { number, title, id } }
                   }
                 }`,
                 { login: owner }
               );
-              const nodes = userRes?.user?.projectsV2?.nodes || [];
-              if (nodes.length === 0) {
-                core.info('No user projects found. Trying org...');
-                const orgRes = await github.graphql(
-                  `query($login: String!) {
-                    organization(login: $login) {
-                      projectsV2(first: 20) {
-                        nodes { number, title, id }
-                      }
-                    }
-                  }`,
-                  { login: owner }
-                );
-                const orgNodes = orgRes?.organization?.projectsV2?.nodes || [];
-                orgNodes.forEach(p => core.info(`  #${p.number} "${p.title}": ${p.id}`));
-              } else {
-                nodes.forEach(p => core.info(`  #${p.number} "${p.title}": ${p.id}`));
+              const userNodes = userRes?.user?.projectsV2?.nodes || [];
+              if (userNodes.length > 0) {
+                core.info('User projects:');
+                userNodes.forEach(p => { core.info(`  #${p.number} "${p.title}": ${p.id}`); found++; });
+              }
+              if (found === 0) {
+                core.info('No projects found. GITHUB_TOKEN may not have access to user projects.');
+                core.info('To get your project ID: open project in browser > DevTools > Network > filter "graphql" > find "id" in response.');
+                core.info('Or create a repo project: Repo > Projects > New project, then it will appear here.');
               }
               core.info('===========================================================');
             } catch (e) {
