@@ -52,15 +52,21 @@ jobs:
               const userRes = await github.graphql(
                 `query($login: String!) {
                   user(login: $login) {
-                    projectsV2(first: 20) { nodes { number, title, id } }
+                    projectsV2(first: 100) {
+                      edges { node { id, title, number } }
+                    }
                   }
                 }`,
                 { login: owner }
               );
-              const userNodes = userRes?.user?.projectsV2?.nodes || [];
-              if (userNodes.length > 0) {
+              const userEdges = userRes?.user?.projectsV2?.edges || [];
+              if (userEdges.length > 0) {
                 core.info('User projects:');
-                userNodes.forEach(p => { core.info(`  #${p.number} "${p.title}": ${p.id}`); found++; });
+                userEdges.forEach(e => {
+                  const p = e.node;
+                  core.info(`  #${p.number} "${p.title}": ${p.id}`);
+                  found++;
+                });
               }
               if (found === 0) {
                 core.info('No projects found. GITHUB_TOKEN may not have access to user projects.');
