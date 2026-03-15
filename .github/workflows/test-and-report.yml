@@ -39,15 +39,21 @@ jobs:
               const repoRes = await github.graphql(
                 `query($owner: String!, $repo: String!) {
                   repository(owner: $owner, name: $repo) {
-                    projectsV2(first: 20) { nodes { number, title, id } }
+                    projectsV2(first: 20) {
+                      edges { node { id, title, number } }
+                    }
                   }
                 }`,
                 { owner, repo }
               );
-              const repoNodes = repoRes?.repository?.projectsV2?.nodes || [];
-              if (repoNodes.length > 0) {
-                core.info('Repository projects:');
-                repoNodes.forEach(p => { core.info(`  #${p.number} "${p.title}": ${p.id}`); found++; });
+              const repoEdges = repoRes?.repository?.projectsV2?.edges || [];
+              if (repoEdges.length > 0) {
+                core.info('Repository / linked projects:');
+                repoEdges.forEach(e => {
+                  const p = e.node;
+                  core.info(`  #${p.number} "${p.title}": ${p.id}`);
+                  found++;
+                });
               }
               const userRes = await github.graphql(
                 `query($login: String!) {
