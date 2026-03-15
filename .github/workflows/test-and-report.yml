@@ -36,6 +36,20 @@ jobs:
             core.info('=== Projects V2 (set PROJECT_ID variable to one of these) ===');
             let found = 0;
             try {
+              const repoByNum = await github.graphql(
+                `query($owner: String!, $repo: String!, $num: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    projectV2(number: $num) { id, title, number }
+                  }
+                }`,
+                { owner, repo, num: 4 }
+              );
+              const p = repoByNum?.repository?.projectV2;
+              if (p) {
+                core.info('Repository project #4 (Test Gym Tracker):');
+                core.info(`  ${p.id}`);
+                found++;
+              }
               const repoRes = await github.graphql(
                 `query($owner: String!, $repo: String!) {
                   repository(owner: $owner, name: $repo) {
