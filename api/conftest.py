@@ -6,7 +6,9 @@ import pytest
 import requests
 from faker import Faker
 
-from config import API_URL
+from config import (
+    API_URL,
+)
 from utils.auth import get_google_id_token
 
 fake = Faker()
