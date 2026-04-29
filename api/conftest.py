@@ -2,20 +2,24 @@
 Shared fixtures for API tests. Uses Google ID token as Bearer auth.
 """
 
-import uuid
 import pytest
 import requests
 from faker import Faker
 
-from config import (
-    API_URL,
-    GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
-    GOOGLE_REFRESH_TOKEN,
-    GOOGLE_TOKEN_URL,
-)
+from config import API_URL
+from utils.auth import get_google_id_token
 
 fake = Faker()
+
+
+def raise_with_details(resp: requests.Response, context: str) -> str:
+    """Raise AssertionError with response body details for fixture setup failures."""
+    if resp.status_code >= 400:
+        raise AssertionError(
+            f"{context} failed with {resp.status_code}\n"
+            f"Response: {resp.text}"
+        )
+    return resp.json()
 
 
 @pytest.fixture(scope="session")
@@ -25,16 +29,7 @@ def api_url() -> str:
 
 @pytest.fixture(scope="session")
 def google_id_token() -> str:
-    response = requests.post(GOOGLE_TOKEN_URL, data={
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
-        "refresh_token": GOOGLE_REFRESH_TOKEN,
-        "grant_type": "refresh_token",
-    })
-    response.raise_for_status()
-    token = response.json().get("id_token")
-    assert token, "Google did not return an id_token"
-    return token
+    return get_google_id_token()
 
 
 @pytest.fixture(scope="session")
@@ -54,8 +49,7 @@ def client_id(api_url: str, auth_headers: dict) -> str:
         },
         headers=auth_headers,
     )
-    resp.raise_for_status()
-    return resp.json()
+    return raise_with_details(resp, "POST /clients")
 
 
 @pytest.fixture
@@ -65,8 +59,7 @@ def exercise_id(api_url: str, auth_headers: dict) -> str:
         json={"name": fake.word(), "type": "SET"},
         headers=auth_headers,
     )
-    resp.raise_for_status()
-    return resp.json()
+    return raise_with_details(resp, "POST /exercises")
 
 
 @pytest.fixture
@@ -75,12 +68,11 @@ def workout_id(api_url: str, auth_headers: dict, client_id: str) -> str:
         f"{api_url}/clients/{client_id}/workouts",
         json={
             "workoutDate": fake.date_this_year().isoformat(),
-            "workoutName": fake.catch_phrase(),
+            "workoutName": fake.catch_phrase()[:30],
         },
         headers=auth_headers,
     )
-    resp.raise_for_status()
-    return resp.json()
+    return raise_with_details(resp, "POST /clients/{clientId}/workouts")
 
 
 @pytest.fixture
@@ -92,5 +84,4 @@ def workout_exercise_id(
         json={"exerciseId": exercise_id},
         headers=auth_headers,
     )
-    resp.raise_for_status()
-    return resp.json()
+    return raise_with_details(resp, "POST /clients/{clientId}/workouts/{workoutId}/exercises")
