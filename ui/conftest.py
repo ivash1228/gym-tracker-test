@@ -1,13 +1,12 @@
 import os
 import pytest
-import requests
 from pathlib import Path
 from playwright.sync_api import Page, BrowserContext, Playwright
 
 from config import (
-    BASE_URL, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
-    GOOGLE_REFRESH_TOKEN, GOOGLE_TOKEN_URL,
+    BASE_URL,
 )
+from utils.auth import get_google_id_token
 
 RESULTS_DIR = Path(__file__).parent / "test_results"
 
@@ -20,16 +19,7 @@ def base_url() -> str:
 @pytest.fixture(scope="session")
 def google_id_token() -> str:
     """Exchange refresh token for a fresh Google ID token via API call."""
-    response = requests.post(GOOGLE_TOKEN_URL, data={
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
-        "refresh_token": GOOGLE_REFRESH_TOKEN,
-        "grant_type": "refresh_token",
-    })
-    response.raise_for_status()
-    token = response.json().get("id_token")
-    assert token, "Google did not return an id_token"
-    return token
+    return get_google_id_token()
 
 
 @pytest.fixture(scope="session")
