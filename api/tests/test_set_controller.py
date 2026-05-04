@@ -8,7 +8,7 @@ fake = Faker()
 
 
 def test_addSetToWorkout_success(api_url, auth_headers, client_id, workout_id, workout_exercise_id):
-    """Happy path: POST /clients/{clientId}/workouts/{workoutId}/exercises/{workoutExerciseId}/sets returns 200."""
+    """Happy path: POST /clients/{clientId}/workouts/{workoutId}/exercises/{workoutExerciseId}/sets returns 201."""
     url = f"{api_url}/clients/{client_id}/workouts/{workout_id}/exercises/{workout_exercise_id}/sets"
     body = {
         "weights": 10,
@@ -16,7 +16,7 @@ def test_addSetToWorkout_success(api_url, auth_headers, client_id, workout_id, w
     }
     
     resp = requests.post(url, headers=auth_headers, json=body)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
 
 def test_addSetToWorkout_unauthorized(api_url, client_id, workout_id, workout_exercise_id):
