@@ -23,7 +23,7 @@ def test_getAllExercises_unauthorized(api_url):
 
 
 def test_createExercise_success(api_url, auth_headers):
-    """Happy path: POST /exercises returns 200."""
+    """Happy path: POST /exercises returns 201."""
     url = f"{api_url}/exercises"
     body = {
         "name": fake.word(),
@@ -31,7 +31,7 @@ def test_createExercise_success(api_url, auth_headers):
     }
     
     resp = requests.post(url, headers=auth_headers, json=body)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
 
 def test_createExercise_unauthorized(api_url):
