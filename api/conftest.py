@@ -10,6 +10,7 @@ from config import (
     API_URL,
 )
 from utils.auth import get_google_id_token
+from utils.redact import redact_sensitive
 
 fake = Faker()
 
@@ -19,7 +20,7 @@ def raise_with_details(resp: requests.Response, context: str) -> str:
     if resp.status_code >= 400:
         raise AssertionError(
             f"{context} failed with {resp.status_code}\n"
-            f"Response: {resp.text}"
+            f"Response: {redact_sensitive(resp.text)}"
         )
     return resp.json()
 

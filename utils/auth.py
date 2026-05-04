@@ -11,6 +11,8 @@ from config import (
     GOOGLE_TOKEN_URL,
 )
 
+from utils.redact import redact_sensitive
+
 
 def get_google_id_token() -> str:
     """Exchange refresh token for a fresh Google ID token."""
@@ -23,7 +25,19 @@ def get_google_id_token() -> str:
             "grant_type": "refresh_token",
         },
     )
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        raise AssertionError(
+            "Google token exchange failed\n"
+            f"Status: {response.status_code}\n"
+            f"Response: {redact_sensitive(response.text)}"
+        ) from e
+
     token = response.json().get("id_token")
-    assert token, "Google did not return an id_token"
+    if not token:
+        raise AssertionError(
+            "Google did not return an id_token\n"
+            f"Response: {redact_sensitive(response.text)}"
+        )
     return token
