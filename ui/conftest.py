@@ -52,7 +52,10 @@ def auth_page(browser, base_url, google_id_token) -> Page:
     ctx.set_default_timeout(15_000)
     pg = ctx.new_page()
     pg.goto("/")
-    pg.evaluate(f"() => localStorage.setItem('idToken', '{google_id_token}')")
+    pg.evaluate(
+        "(token) => localStorage.setItem('idToken', token)",
+        google_id_token,
+    )
     pg.reload()
     yield pg
     pg.close()
