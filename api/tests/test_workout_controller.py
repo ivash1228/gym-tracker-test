@@ -33,7 +33,7 @@ def test_addWorkout_success(api_url, auth_headers, client_id):
     url = f"{api_url}/clients/{client_id}/workouts"
     body = {
         "workoutDate": fake.date_this_year().isoformat(),
-        "workoutName": fake.catch_phrase(),
+        "workoutName": fake.catch_phrase()[:30],
     }
     
     resp = requests.post(url, headers=auth_headers, json=body)
