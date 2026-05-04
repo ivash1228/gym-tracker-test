@@ -29,14 +29,14 @@ def test_getWorkoutExercises_not_found(api_url, auth_headers):
 
 
 def test_addExerciseToWorkout_success(api_url, auth_headers, client_id, workout_id, exercise_id):
-    """Happy path: POST /clients/{clientId}/workouts/{workoutId}/exercises returns 200."""
+    """Happy path: POST /clients/{clientId}/workouts/{workoutId}/exercises returns 201."""
     url = f"{api_url}/clients/{client_id}/workouts/{workout_id}/exercises"
     body = {
         "exerciseId": exercise_id,
     }
     
     resp = requests.post(url, headers=auth_headers, json=body)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
 
 def test_addExerciseToWorkout_unauthorized(api_url, client_id, workout_id, exercise_id):
